@@ -28,7 +28,7 @@ async function run() {
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
 
-    // Connect to the "insertDB" database and access its "haiku" collection
+    // Connect to the "insertDB" database and access its "coffee" collection
     const coffeeDB = client.db("coffeeDB");
     const coffeeCollection = coffeeDB.collection("coffee");
 
@@ -36,6 +36,14 @@ async function run() {
     app.get("/coffee", async (req, res) => {
       const cursor = coffeeCollection.find();
       const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // get single data
+    app.get("/coffee-details/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await coffeeCollection.findOne(query);
       res.send(result);
     });
 
@@ -47,13 +55,38 @@ async function run() {
       res.send(result);
     });
 
+    // update single data
+    app.put("/update-coffee-details/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedCoffeeData = req.body;
+      console.log(updatedCoffeeData);
+      const updatedCoffee = {
+        $set: {
+          name: updatedCoffeeData.name,
+          chef: updatedCoffeeData.chef,
+          supplier: updatedCoffeeData.supplier,
+          taste: updatedCoffeeData.taste,
+          category: updatedCoffeeData.category,
+          details: updatedCoffeeData.details,
+          photo: updatedCoffeeData.photo,
+        },
+      };
+      const result = await coffeeCollection.updateOne(
+        filter,
+        updatedCoffee,
+        options
+      );
+      res.send(result);
+    });
+
     // delete data
     app.delete("/coffee/remove/:id", async (req, res) => {
       const id = req.params.id;
-      /* Delete the first document in the "userDB" collection that matches
-    the specified query document */
+      /* Delete the first document in the "coffeeDB" collection that matches
+      the specified query document */
       const query = { _id: new ObjectId(id) };
-      console.log(query);
       const result = await coffeeCollection.deleteOne(query);
       res.send(result);
     });
